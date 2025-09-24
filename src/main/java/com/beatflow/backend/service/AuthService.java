@@ -18,7 +18,6 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    // ✅ This constructor injection is correct.
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -26,7 +25,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
-    public void signup(SignUpRequest request) {
+    public User signup(SignUpRequest request) {
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new IllegalArgumentException("Email already in use.");
         }
@@ -34,14 +33,22 @@ public class AuthService {
         user.setName(request.name());
         user.setEmail(request.email());
         user.setPassword(passwordEncoder.encode(request.password()));
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public AuthResponse login(LoginRequest request) {
+        // This tells Spring Security to securely compare the passwords.
+        // If the password or email is wrong, it will throw an exception.
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.email(), request.password())
+            new UsernamePasswordAuthenticationToken(
+                request.email(),
+                request.password()
+            )
         );
-        var user = userRepository.findByEmail(request.email()).orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+        
+        // If successful, generate and return the token (the "ID Card").
+        var user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
         var jwtToken = jwtService.generateToken(user);
         return new AuthResponse(jwtToken);
     }
