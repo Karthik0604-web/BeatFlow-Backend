@@ -3,6 +3,7 @@ package com.beatflow.backend.config;
 import com.beatflow.backend.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // ✅ Add this import
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -27,17 +28,17 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    // ✅ Pass the filter AND the provider as parameters for clean dependency injection
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                // ✅ This new rule explicitly allows ALL preflight OPTIONS requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // ✅ This is now cleaner and more explicit
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -71,7 +72,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // ✅ CORRECTED: Only allow your specific frontend URL
+        // Allow your frontend's origin
         configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
@@ -82,4 +83,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
