@@ -40,9 +40,6 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()     // allow preflight
                 .requestMatchers("/api/auth/**").permitAll() 
-                .requestMatchers("/api/playlist**").permitAll()// allow register/login, etc
-                .requestMatchers("/api/artists/**").permitAll()
-                .requestMatchers("/api/tracts/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
