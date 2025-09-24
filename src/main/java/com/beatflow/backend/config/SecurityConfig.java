@@ -30,17 +30,25 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthFilter,
-            AuthenticationProvider authenticationProvider,
-            // ✅ We will now use this injected bean
-            CorsConfigurationSource corsConfigurationSource 
+            AuthenticationProvider authenticationProvider
     ) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            // ✅ Use the injected corsConfigurationSource parameter directly
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                // Public, unlocked doors for signup and login
                 .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
+                
+                // --- Manual Rules for Protected Doors ---
+                // This explicitly locks every music-related endpoint.
+                .requestMatchers("/api/tracks/**").authenticated()
+                .requestMatchers("/api/albums/**").authenticated()
+                .requestMatchers("/api/playlists/**").authenticated()
+                .requestMatchers("/api/artists/**").authenticated()
+                .requestMatchers("/api/search/**").authenticated()
+
+                // This is still a good fallback to have
+                .anyRequest().authenticated() 
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
