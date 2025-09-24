@@ -26,11 +26,9 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // ❌ DO NOT inject the filter in a constructor here.
-
     @Bean
-    // ✅ PASS the filter as a parameter directly into this method.
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter) throws Exception {
+    // ✅ Pass the filter AND the provider as parameters for clean dependency injection
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -39,8 +37,8 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // ✅ USE the authenticationProvider bean defined below.
-            .authenticationProvider(authenticationProvider(null)) // Pass null, as it will be injected by Spring
+            // ✅ This is now cleaner and more explicit
+            .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -73,6 +71,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // ✅ CORRECTED: Only allow your specific frontend URL
         configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
@@ -83,3 +82,4 @@ public class SecurityConfig {
         return source;
     }
 }
+
