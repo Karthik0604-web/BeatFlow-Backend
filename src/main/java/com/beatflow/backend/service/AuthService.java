@@ -43,11 +43,10 @@ public class AuthService {
                 request.password()
             )
         );
-        
+
         var user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
         var jwtToken = jwtService.generateToken(user);
         return new AuthResponse(jwtToken);
     }
 }
-
