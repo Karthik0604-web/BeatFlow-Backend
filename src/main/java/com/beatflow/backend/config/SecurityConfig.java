@@ -3,6 +3,7 @@ package com.beatflow.backend.config;
 import com.beatflow.backend.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // ✅ Add this import
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -36,19 +37,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Public, unlocked doors for signup and login
+                // ✅ This new rule explicitly allows ALL browser preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Public, unlocked door for signup and login
                 .requestMatchers("/api/auth/**").permitAll()
-                
-                // --- Manual Rules for Protected Doors ---
-                // This explicitly locks every music-related endpoint.
-                .requestMatchers("/api/tracks/**").authenticated()
-                .requestMatchers("/api/albums/**").authenticated()
-                .requestMatchers("/api/playlists/**").authenticated()
-                .requestMatchers("/api/artists/**").authenticated()
-                .requestMatchers("/api/search/**").authenticated()
-
-                // This is still a good fallback to have
-                .anyRequest().authenticated() 
+                // ✅ SIMPLIFIED: All other requests are automatically protected by this single rule
+                .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
@@ -94,3 +88,4 @@ public class SecurityConfig {
         return source;
     }
 }
+
